@@ -1,0 +1,53 @@
+# Paired iteration: 5 slots (fixed + zip + fixed + zip + fixed)
+# Produces 3 constructs — one per paired ORF/barcode entry
+
+name_template: "{orf}_{barcode}"
+output:
+  fasta: output/paired.fasta
+  csv: output/paired.csv
+
+slots:
+  - name: flank_5p
+    behavior: fixed
+    source:
+      inline:
+        - name: flank_5p
+          sequence: GCTAGCGCTAGC
+
+  - name: orf
+    behavior: zip
+    zip_group: main
+    source:
+      inline:
+        - name: GFP
+          sequence: ATGGTGAGCAAGGGCGAGGAG
+        - name: RFP
+          sequence: ATGGTGAGCAAGGGCGAGGAC
+        - name: BFP
+          sequence: ATGGTGAGCAAGGGCGAGGAT
+
+  - name: spacer
+    behavior: fixed
+    source:
+      inline:
+        - name: spacer
+          sequence: GGAGGCGGA
+
+  - name: barcode
+    behavior: zip
+    zip_group: main
+    source:
+      inline:
+        - name: BC01
+          sequence: AACCGGTTAACCGGTT
+        - name: BC02
+          sequence: TTGGCCAATTGGCCAA
+        - name: BC03
+          sequence: GGAATTCCGGAATTCC
+
+  - name: flank_3p
+    behavior: fixed
+    source:
+      inline:
+        - name: flank_3p
+          sequence: GCTAGCGCTAGC

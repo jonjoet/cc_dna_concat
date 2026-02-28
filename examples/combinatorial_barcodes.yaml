@@ -1,0 +1,44 @@
+# Combinatorial with barcodes: 2 product + 1 zip
+# 2 promoters x 3 ORFs = 6 combos, each gets a unique barcode via zip
+
+name_template: "{promoter}_{orf}_{barcode}"
+output:
+  fasta: output/combo_bc.fasta
+
+slots:
+  - name: promoter
+    behavior: product
+    source:
+      inline:
+        - name: pCMV
+          sequence: GTTGACATTGATTATTGACTAG
+        - name: pEF1a
+          sequence: CCTCGGCCTCTGAGCTATTCC
+
+  - name: orf
+    behavior: product
+    source:
+      inline:
+        - name: GFP
+          sequence: ATGGTGAGCAAGGGCGAGGAG
+        - name: RFP
+          sequence: ATGGTGAGCAAGGGCGAGGAC
+        - name: BFP
+          sequence: ATGGTGAGCAAGGGCGAGGAT
+
+  - name: barcode
+    behavior: zip
+    source:
+      inline:
+        - name: BC01
+          sequence: AACCGGTT
+        - name: BC02
+          sequence: TTGGCCAA
+        - name: BC03
+          sequence: GGAATTCC
+        - name: BC04
+          sequence: CCTTAAGG
+        - name: BC05
+          sequence: AATTCCGG
+        - name: BC06
+          sequence: TTCCAAGG

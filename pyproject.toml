@@ -1,0 +1,25 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "dna-concat"
+version = "0.1.0"
+description = "Flexible DNA sequence concatenation with slot-based combination logic"
+requires-python = ">=3.10"
+dependencies = [
+    "biopython>=1.80",
+    "pyyaml>=6.0",
+    "click>=8.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+]
+
+[project.scripts]
+dna-concat = "dna_concat.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/dna_concat"]

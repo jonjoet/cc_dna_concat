@@ -1,0 +1,19 @@
+slots:
+  - name: promoter
+    behavior: product
+    source:
+      inline:
+        - name: pCMV
+          sequence: AAAA
+        - name: pEF1a
+          sequence: CCCC
+  - name: orf
+    behavior: product
+    source:
+      inline:
+        - name: GFP
+          sequence: ATGGGGG
+        - name: RFP
+          sequence: ATGRRRRR
+        - name: BFP
+          sequence: ATGBBBBB

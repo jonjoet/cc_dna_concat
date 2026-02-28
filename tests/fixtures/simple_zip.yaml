@@ -1,0 +1,29 @@
+name_template: "{orf}_{barcode}"
+output:
+  fasta: output/constructs.fasta
+slots:
+  - name: flank_5p
+    behavior: fixed
+    source:
+      inline:
+        - name: flank_5p
+          sequence: GCTAGC
+  - name: orf
+    behavior: zip
+    zip_group: main
+    source:
+      fasta: orfs.fasta
+  - name: barcode
+    behavior: zip
+    zip_group: main
+    source:
+      csv:
+        path: barcodes.csv
+        name_column: barcode_id
+        sequence_column: barcode_seq
+  - name: flank_3p
+    behavior: fixed
+    source:
+      inline:
+        - name: flank_3p
+          sequence: GCTAGC

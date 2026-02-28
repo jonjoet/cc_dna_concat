@@ -1,0 +1,27 @@
+# Full combinatorial: 2 product slots
+# Produces 2 x 3 = 6 constructs
+
+output:
+  fasta: output/combinatorial.fasta
+  csv: output/combinatorial.csv
+
+slots:
+  - name: promoter
+    behavior: product
+    source:
+      inline:
+        - name: pCMV
+          sequence: GTTGACATTGATTATTGACTAG
+        - name: pEF1a
+          sequence: CCTCGGCCTCTGAGCTATTCC
+
+  - name: orf
+    behavior: product
+    source:
+      inline:
+        - name: GFP
+          sequence: ATGGTGAGCAAGGGCGAGGAG
+        - name: RFP
+          sequence: ATGGTGAGCAAGGGCGAGGAC
+        - name: BFP
+          sequence: ATGGTGAGCAAGGGCGAGGAT
