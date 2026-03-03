@@ -16,7 +16,6 @@ slots:
 
   - name: orf
     behavior: zip
-    zip_group: main
     source:
       inline:
         - name: GFP
@@ -35,7 +34,6 @@ slots:
 
   - name: barcode
     behavior: zip
-    zip_group: main
     source:
       inline:
         - name: BC01

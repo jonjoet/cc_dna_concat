@@ -2,6 +2,8 @@
 
 from pathlib import Path
 
+import yaml
+
 from dna_concat.config import load_config
 from dna_concat.models import SlotBehavior
 
@@ -27,3 +29,38 @@ def test_load_product_config():
     assert len(spec.slots[1].sequences) == 3
     # Auto-generated name template
     assert spec.name_template == "{promoter}_{orf}"
+
+
+def test_allow_zip_trim_parsing(tmp_path):
+    """allow_zip_trim in YAML config is parsed and passed to AssemblySpec."""
+    config = {
+        "allow_zip_trim": True,
+        "slots": [
+            {
+                "name": "a",
+                "behavior": "zip",
+                "source": {"inline": [{"name": "x", "sequence": "AAA"}]},
+            },
+        ],
+    }
+    config_path = tmp_path / "trim.yaml"
+    config_path.write_text(yaml.dump(config))
+    spec, _ = load_config(config_path)
+    assert spec.allow_zip_trim is True
+
+
+def test_allow_zip_trim_defaults_false(tmp_path):
+    """allow_zip_trim defaults to False when not specified."""
+    config = {
+        "slots": [
+            {
+                "name": "a",
+                "behavior": "zip",
+                "source": {"inline": [{"name": "x", "sequence": "AAA"}]},
+            },
+        ],
+    }
+    config_path = tmp_path / "no_trim.yaml"
+    config_path.write_text(yaml.dump(config))
+    spec, _ = load_config(config_path)
+    assert spec.allow_zip_trim is False

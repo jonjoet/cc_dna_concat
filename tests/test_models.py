@@ -37,42 +37,58 @@ def test_slot_requires_at_least_one_sequence():
         Slot(name="test", behavior=SlotBehavior.ZIP, sequences=[])
 
 
-def test_zip_group_mismatch():
+def test_zip_slot_mismatch():
     with pytest.raises(ValueError, match="mismatched counts"):
         AssemblySpec(
             slots=[
                 Slot(
                     name="a",
                     behavior=SlotBehavior.ZIP,
-                    zip_group="g1",
                     sequences=[NamedSequence("x", "A"), NamedSequence("y", "B")],
                 ),
                 Slot(
                     name="b",
                     behavior=SlotBehavior.ZIP,
-                    zip_group="g1",
                     sequences=[NamedSequence("x", "A")],
                 ),
             ]
         )
 
 
-def test_zip_groups_same_size_ok():
+def test_zip_slots_same_size_ok():
     spec = AssemblySpec(
         slots=[
             Slot(
                 name="a",
                 behavior=SlotBehavior.ZIP,
-                zip_group="g1",
                 sequences=[NamedSequence("x", "A"), NamedSequence("y", "B")],
             ),
             Slot(
                 name="b",
                 behavior=SlotBehavior.ZIP,
-                zip_group="g1",
                 sequences=[NamedSequence("p", "C"), NamedSequence("q", "D")],
             ),
         ]
+    )
+    assert len(spec.slots) == 2
+
+
+def test_zip_slot_mismatch_allowed_with_trim():
+    """Mismatched zip slot lengths are allowed when allow_zip_trim=True."""
+    spec = AssemblySpec(
+        slots=[
+            Slot(
+                name="a",
+                behavior=SlotBehavior.ZIP,
+                sequences=[NamedSequence("x", "A"), NamedSequence("y", "B"), NamedSequence("z", "C")],
+            ),
+            Slot(
+                name="b",
+                behavior=SlotBehavior.ZIP,
+                sequences=[NamedSequence("p", "D"), NamedSequence("q", "E")],
+            ),
+        ],
+        allow_zip_trim=True,
     )
     assert len(spec.slots) == 2
 

@@ -26,15 +26,23 @@ def assemble(spec: AssemblySpec) -> list[Construct]:
 
     product_count = len(product_combos)
 
-    # Phase 2: Determine zip count and validate
+    # Phase 2: Determine zip count and validate/trim
     if zip_slots:
-        zip_count = len(zip_slots[0].sequences)  # already validated matching
+        zip_count = min(len(s.sequences) for s in zip_slots)
         if product_slots:
-            if zip_count != product_count:
-                raise ValueError(
-                    f"Zip count ({zip_count}) must equal product count "
-                    f"({product_count}) when both are present"
-                )
+            if spec.allow_zip_trim:
+                if zip_count < product_count:
+                    raise ValueError(
+                        f"Zip count ({zip_count}) is less than product count "
+                        f"({product_count}); cannot trim to fill missing entries"
+                    )
+                zip_count = product_count
+            else:
+                if zip_count != product_count:
+                    raise ValueError(
+                        f"Zip count ({zip_count}) must equal product count "
+                        f"({product_count}) when both are present"
+                    )
         total = zip_count
     else:
         total = product_count
@@ -46,8 +54,7 @@ def assemble(spec: AssemblySpec) -> list[Construct]:
 
         # Add product assignments
         if product_slots:
-            combo_index = i if not zip_slots else i
-            for slot, seq in zip(product_slots, product_combos[combo_index]):
+            for slot, seq in zip(product_slots, product_combos[i]):
                 assignments[slot.name] = seq
 
         # Add zip assignments

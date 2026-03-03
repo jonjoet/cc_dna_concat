@@ -10,12 +10,10 @@ slots:
           sequence: GCTAGC
   - name: orf
     behavior: zip
-    zip_group: main
     source:
       fasta: orfs.fasta
   - name: barcode
     behavior: zip
-    zip_group: main
     source:
       csv:
         path: barcodes.csv

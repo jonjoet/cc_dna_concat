@@ -30,13 +30,13 @@ def load_config(config_path: str | Path) -> tuple[AssemblySpec, dict]:
                 name=slot_def["name"],
                 behavior=behavior,
                 sequences=sequences,
-                zip_group=slot_def.get("zip_group", "default"),
             )
         )
 
     spec = AssemblySpec(
         slots=slots,
         name_template=raw.get("name_template"),
+        allow_zip_trim=raw.get("allow_zip_trim", False),
     )
 
     output_config = raw.get("output", {})

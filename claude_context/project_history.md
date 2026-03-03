@@ -11,10 +11,10 @@ The core use case is designing synthetic biology libraries — promoter/ORF/barc
 The central design idea is the **slot**: a named position in a construct that holds one or more candidate sequences. Each slot has a **behavior** that determines how its sequences combine with other slots:
 
 - **fixed** — exactly one sequence, present in every construct (e.g., flanking regions, spacers)
-- **zip** — sequences paired by index within a `zip_group`; all zip slots in a group must have the same count
+- **zip** — sequences paired by index; all zip slots must have the same count (unless `allow_zip_trim` is set)
 - **product** — full Cartesian product across all product slots
 
-When both product and zip behaviors are present, the zip count must equal the product count, creating a 1:1 pairing between combinatorial results and zip entries. This enables patterns like "6 promoter/ORF combos, each assigned a unique barcode."
+When both product and zip behaviors are present, the zip count must equal the product count, creating a 1:1 pairing between combinatorial results and zip entries. This enables patterns like "6 promoter/ORF combos, each assigned a unique barcode." With `allow_zip_trim: true`, zip slots with more entries than the product count are silently truncated; zip slots with too few entries still produce an error.
 
 ## Architecture and modules
 

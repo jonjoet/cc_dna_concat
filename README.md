@@ -93,16 +93,19 @@ docker run dna-concat -c "dna-concat run examples/paired_iteration.yaml --dry-ru
 | Behavior  | Description | Construct count |
 |-----------|-------------|-----------------|
 | `fixed`   | Same single sequence in every construct | 1 (constant) |
-| `zip`     | Sequences paired by index across slots in the same `zip_group` | N (zip length) |
+| `zip`     | Sequences paired by index across all zip slots | N (zip length) |
 | `product` | Full Cartesian product across all product slots | N1 x N2 x ... |
 
-When both `product` and `zip` slots are present, the zip count must equal the product count — each product combination is paired 1:1 with a zip entry.
+When both `product` and `zip` slots are present, the zip count must equal the product count — each product combination is paired 1:1 with a zip entry. Set `allow_zip_trim: true` to silently truncate zip slots that have more entries than needed (zip slots with too few entries still produce an error).
 
 ## YAML config reference
 
 ```yaml
 # Optional: name template using slot names as placeholders
 name_template: "{promoter}_{orf}"
+
+# Optional: allow trimming zip slots to match product count (default: false)
+allow_zip_trim: false
 
 # Optional: output paths (relative to config file location)
 output:
@@ -113,7 +116,6 @@ output:
 slots:
   - name: slot_name          # unique slot identifier
     behavior: fixed|zip|product
-    zip_group: group_name    # optional, for zip slots (default: "default")
     source:
       # One of:
       inline:

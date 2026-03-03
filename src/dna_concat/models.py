@@ -23,7 +23,6 @@ class Slot:
     name: str
     behavior: SlotBehavior
     sequences: list[NamedSequence]
-    zip_group: str = "default"
 
     def __post_init__(self) -> None:
         if not self.sequences:
@@ -53,26 +52,29 @@ class Construct:
 class AssemblySpec:
     slots: list[Slot]
     name_template: str | None = None
+    allow_zip_trim: bool = False
 
     def __post_init__(self) -> None:
-        self._validate_zip_groups()
+        self._validate_zip_slots()
         if self.name_template is None:
             self.name_template = self._auto_name_template()
 
-    def _validate_zip_groups(self) -> None:
-        zip_groups: dict[str, list[Slot]] = {}
-        for slot in self.slots:
-            if slot.behavior is SlotBehavior.ZIP:
-                zip_groups.setdefault(slot.zip_group, []).append(slot)
-        for group_name, group_slots in zip_groups.items():
-            sizes = {len(s.sequences) for s in group_slots}
-            if len(sizes) > 1:
-                detail = ", ".join(
-                    f"'{s.name}'={len(s.sequences)}" for s in group_slots
-                )
-                raise ValueError(
-                    f"Zip group '{group_name}' has mismatched counts: {detail}"
-                )
+    def _validate_zip_slots(self) -> None:
+        zip_slots = [s for s in self.slots if s.behavior is SlotBehavior.ZIP]
+        if not zip_slots:
+            return
+        sizes = {len(s.sequences) for s in zip_slots}
+        if self.allow_zip_trim:
+            # With trimming, zip slots can differ — they'll be trimmed to the
+            # minimum length (or to product count) during assembly.
+            return
+        if len(sizes) > 1:
+            detail = ", ".join(
+                f"'{s.name}'={len(s.sequences)}" for s in zip_slots
+            )
+            raise ValueError(
+                f"Zip slots have mismatched counts: {detail}"
+            )
 
     def _auto_name_template(self) -> str:
         non_fixed = [
