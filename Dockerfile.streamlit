@@ -1,0 +1,18 @@
+FROM python:3.11-slim
+
+LABEL maintainer="cc_dna_concat" \
+      description="DNA concatenation web interface"
+
+WORKDIR /app
+
+COPY pyproject.toml README.md ./
+COPY src/ src/
+
+RUN pip install --no-cache-dir ".[streamlit]"
+
+EXPOSE 8501
+
+ENTRYPOINT ["python", "-m", "streamlit", "run", "src/dna_concat/gui.py", \
+    "--server.port=8501", \
+    "--server.address=0.0.0.0", \
+    "--browser.gatherUsageStats=false"]

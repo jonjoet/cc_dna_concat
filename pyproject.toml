@@ -17,6 +17,7 @@ dependencies = [
 dev = [
     "pytest>=7.0",
 ]
+streamlit = ["streamlit>=1.28"]
 
 [project.scripts]
 dna-concat = "dna_concat.cli:main"
