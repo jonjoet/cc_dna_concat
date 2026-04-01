@@ -40,10 +40,22 @@ This produces 4 constructs (2 promoters x 2 ORFs) written to a FASTA file.
 pip install -e .
 ```
 
-### Docker
+### pip with Streamlit GUI
+
+```bash
+pip install -e ".[streamlit]"
+```
+
+### Docker (CLI)
 
 ```bash
 docker build -t dna-concat .
+```
+
+### Docker (Streamlit GUI)
+
+```bash
+docker build -f Dockerfile.streamlit -t dna-concat-streamlit:latest .
 ```
 
 ## Usage
@@ -78,7 +90,7 @@ for c in constructs:
     print(c.format_name(spec.name_template), c.full_sequence)
 ```
 
-### Docker
+### Docker (CLI)
 
 ```bash
 # Run with a config file (mount your data directory)
@@ -87,6 +99,26 @@ docker run -v $(pwd)/data:/data dna-concat -c "dna-concat run /data/config.yaml"
 # Run the bundled example
 docker run dna-concat -c "dna-concat run examples/paired_iteration.yaml --dry-run"
 ```
+
+### Streamlit GUI
+
+Run locally:
+
+```bash
+pip install -e ".[streamlit]"
+streamlit run src/dna_concat/gui.py
+# Access at http://localhost:8501
+```
+
+Or via Docker:
+
+```bash
+docker build -f Dockerfile.streamlit -t dna-concat-streamlit:latest .
+docker run -p 8501:8501 dna-concat-streamlit:latest
+# Access at http://localhost:8501
+```
+
+The GUI provides an interactive interface for building slot configurations, running assemblies, and downloading results as FASTA or CSV. You can configure slots manually or upload a YAML config file via the sidebar. Note that YAML configs referencing external fasta/csv files will need those sequences re-added via the file upload UI, since file paths from your local machine are not accessible inside the browser.
 
 ## Slot behaviors
 
