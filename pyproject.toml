@@ -6,6 +6,9 @@ build-backend = "hatchling.build"
 name = "dna-concat"
 version = "0.1.0"
 description = "Flexible DNA sequence concatenation with slot-based combination logic"
+license = "MIT"
+authors = [{ name = "Jonathan Turner" }]
+urls = { Repository = "https://github.com/jonjoet/cc_dna_concat" }
 requires-python = ">=3.10"
 dependencies = [
     "biopython>=1.80",

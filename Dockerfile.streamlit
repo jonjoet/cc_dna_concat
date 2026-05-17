@@ -1,6 +1,6 @@
 FROM python:3.11-slim
 
-LABEL maintainer="cc_dna_concat" \
+LABEL maintainer="jonjoet" \
       description="DNA concatenation web interface"
 
 WORKDIR /app

@@ -4,4 +4,6 @@ __pycache__
 *.egg-info
 .DS_Store
 .claude
+.gitignore
 claude_context
+output/

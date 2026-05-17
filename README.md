@@ -2,7 +2,7 @@
 
 Flexible DNA sequence concatenation with slot-based combination logic.
 
-Define multi-part DNA constructs in YAML, and dna-concat generates all combinations as FASTA or CSV — handling fixed regions, paired iteration (zip), and full combinatorial (product) assembly in a single config.
+Define multi-part DNA constructs in YAML, and dna-concat generates all combinations as FASTA or CSV — handling fixed regions, paired iteration (zip), and full combinatorial (product) assembly in a single config. Includes a CLI, a Python API, and a Streamlit web interface (work in progress).
 
 ## Quick example
 

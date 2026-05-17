@@ -37,9 +37,10 @@ Key design decisions:
 
 ## Current state
 
-- All 6 modules implemented
-- 26 tests passing across 5 test files (test_models, test_assembly, test_config, test_io, test_cli)
+- All 7 modules implemented (6 core + Streamlit GUI)
+- 33 tests passing across 5 test files (test_models, test_assembly, test_config, test_io, test_cli)
 - Multi-stage Dockerfile: test stage runs pytest, production stage is Nextflow-compatible
+- Separate Dockerfile for Streamlit web interface
 - 3 example YAML configs demonstrating paired iteration, full combinatorial, and mixed product+zip patterns
 - CLI supports dry-run validation, output path overrides, and both FASTA and CSV output
 
@@ -47,11 +48,12 @@ Key design decisions:
 
 ```
 pyproject.toml
-Dockerfile
+Dockerfile               — multi-stage CLI build (test + production)
+Dockerfile.streamlit     — Streamlit web interface
 README.md
-src/dna_concat/          — package source (6 modules)
-tests/                   — pytest suite (26 tests)
+src/dna_concat/          — package source (7 modules)
+tests/                   — pytest suite (33 tests)
   fixtures/              — test FASTA/CSV files
 examples/                — 3 YAML example configs
-claude_context/          — this file
+claude_context/          — design context and development notes
 ```

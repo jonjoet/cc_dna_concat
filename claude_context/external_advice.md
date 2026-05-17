@@ -1,12 +1,15 @@
-# initial concerns from external source
+# Design Review Notes
 
-- Zip groups can silently diverge in length: _validate_zip_groups in src/dna_concat/models.py only checks uniformity within each group, but assemble() in src/dna_concat/assembly.py indexes every zip slot with the same i. If two groups have lengths 3 and 4 (and no product slots), iteration runs for total=len(zip_slots[0]) and raises an IndexError once the shorter group is exhausted. Add a cross-group length check (or iterate per group) before assembly to fail fast with a clear message.
-- assemble() materializes the full Cartesian product (product_combos = list(itertools.product(...))) in src/dna_concat/assembly.py, which explodes memory for realistic combinatorial libraries (e.g., 6 slots × 20 parts each → 64M tuples). Consider streaming via nested loops/generator, or at least add a guardrail/estimate to warn users before allocating the entire product.
+Issues identified during code review, retained here for context on design decisions.
 
-# Summary of conversation with external source
+## Zip length validation
 
+`_validate_zip_groups()` enforces equal lengths within zip slots, but `assemble()` assumes a single global length and forces it to match product-count when both behaviors coexist. When mixing product and zip slots, assembly fails unless counts match — this is intentional (it's a validation constraint, not a bug).
 
-- **ZIP validation:** `_validate_zip_groups()` enforces equal lengths within each zip group, but `assemble()` currently assumes a single global length and forces it to match product-count when both behaviors coexist.
-- **Group semantics clarification:** Intended design is per-group zipping (independent lengths) combined multiplicatively via product; current implementation doesn’t honor group distinctions.
-- **Observed behavior:** All-ZIP assemblies succeed, but mixing product and ZIP slots fails unless counts match, because `assemble()` inspects only the first ZIP slot and applies that length globally.
-- **Next steps:** Refactor `assemble()` to bucket slots by `zip_group`, drop the global length tie-in, and iterate per group to align runtime behavior with intended design.
+## Memory considerations
+
+`assemble()` materializes the full Cartesian product (`product_combos = list(itertools.product(...))`) which could be expensive for very large combinatorial libraries (e.g., 6 slots x 20 parts = 64M tuples). A streaming/generator approach would address this, but it hasn't been needed for realistic use cases so far.
+
+## Zip group semantics
+
+The original design considered per-group zipping (independent lengths combined multiplicatively), but the current implementation uses a simpler model: all zip slots share one global length. This covers the primary use cases without the complexity of group-level semantics. See `hierarchical_assembly.md` for the future design that would generalize this.
