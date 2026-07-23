@@ -133,3 +133,93 @@ def test_auto_name_template_all_fixed():
         ]
     )
     assert spec.name_template == "construct"
+
+
+# --- Variable stuffer validation ---
+
+
+def _stuffer(name, counterpart, sequence="AAAAAA", truncate_side="right"):
+    return Slot(
+        name=name,
+        behavior=SlotBehavior.VARIABLE_STUFFER,
+        sequences=[NamedSequence("pad", sequence)],
+        counterpart=counterpart,
+        truncate_side=truncate_side,
+    )
+
+
+def test_variable_stuffer_requires_one_sequence():
+    with pytest.raises(ValueError, match="exactly 1 sequence"):
+        Slot(
+            name="s",
+            behavior=SlotBehavior.VARIABLE_STUFFER,
+            sequences=[NamedSequence("a", "AAA"), NamedSequence("b", "CCC")],
+            counterpart="orf",
+            truncate_side="right",
+        )
+
+
+def test_variable_stuffer_requires_counterpart():
+    with pytest.raises(ValueError, match="counterpart"):
+        Slot(
+            name="s",
+            behavior=SlotBehavior.VARIABLE_STUFFER,
+            sequences=[NamedSequence("a", "AAA")],
+            truncate_side="right",
+        )
+
+
+def test_variable_stuffer_requires_valid_truncate_side():
+    with pytest.raises(ValueError, match="truncate_side"):
+        Slot(
+            name="s",
+            behavior=SlotBehavior.VARIABLE_STUFFER,
+            sequences=[NamedSequence("a", "AAA")],
+            counterpart="orf",
+            truncate_side="middle",
+        )
+
+
+def test_non_stuffer_rejects_stuffer_fields():
+    with pytest.raises(ValueError, match="only valid for variable_stuffer"):
+        Slot(
+            name="s",
+            behavior=SlotBehavior.FIXED,
+            sequences=[NamedSequence("a", "AAA")],
+            counterpart="orf",
+        )
+
+
+def test_variable_stuffer_unknown_counterpart():
+    with pytest.raises(ValueError, match="unknown counterpart"):
+        AssemblySpec(
+            slots=[
+                Slot(name="orf", behavior=SlotBehavior.FIXED, sequences=[NamedSequence("x", "ATG")]),
+                _stuffer("stuffer", counterpart="nope"),
+            ]
+        )
+
+
+def test_variable_stuffer_counterpart_self():
+    with pytest.raises(ValueError, match="itself"):
+        AssemblySpec(slots=[_stuffer("stuffer", counterpart="stuffer")])
+
+
+def test_variable_stuffer_counterpart_another_stuffer():
+    with pytest.raises(ValueError, match="another variable stuffer"):
+        AssemblySpec(
+            slots=[
+                _stuffer("s1", counterpart="s2"),
+                _stuffer("s2", counterpart="s1"),
+            ]
+        )
+
+
+def test_auto_name_template_excludes_stuffer():
+    spec = AssemblySpec(
+        slots=[
+            Slot(name="orf", behavior=SlotBehavior.ZIP, sequences=[NamedSequence("x", "ATG")]),
+            _stuffer("stuffer", counterpart="orf"),
+        ]
+    )
+    assert spec.name_template == "{orf}"

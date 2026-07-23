@@ -64,3 +64,29 @@ def test_allow_zip_trim_defaults_false(tmp_path):
     config_path.write_text(yaml.dump(config))
     spec, _ = load_config(config_path)
     assert spec.allow_zip_trim is False
+
+
+def test_load_variable_stuffer_config(tmp_path):
+    """A variable_stuffer slot parses into a Slot with its counterpart/side."""
+    config = {
+        "slots": [
+            {
+                "name": "orf",
+                "behavior": "zip",
+                "source": {"inline": [{"name": "x", "sequence": "ATG"}]},
+            },
+            {
+                "name": "stuffer",
+                "behavior": "variable_stuffer",
+                "counterpart": "orf",
+                "truncate_side": "left",
+                "source": {"inline": [{"name": "pad", "sequence": "AAAAAA"}]},
+            },
+        ],
+    }
+    config_path = tmp_path / "stuffer.yaml"
+    config_path.write_text(yaml.dump(config))
+    spec, _ = load_config(config_path)
+    assert spec.slots[1].behavior is SlotBehavior.VARIABLE_STUFFER
+    assert spec.slots[1].counterpart == "orf"
+    assert spec.slots[1].truncate_side == "left"

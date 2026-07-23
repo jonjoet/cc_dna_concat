@@ -228,3 +228,97 @@ def test_zip_trim_too_few_still_errors():
     )
     with pytest.raises(ValueError, match="less than product count"):
         assemble(spec)
+
+
+# --- Variable stuffer tests ---
+
+
+def _stuffer_slot(name, counterpart, sequence, truncate_side):
+    return Slot(
+        name=name,
+        behavior=SlotBehavior.VARIABLE_STUFFER,
+        sequences=[NamedSequence("pad", sequence)],
+        counterpart=counterpart,
+        truncate_side=truncate_side,
+    )
+
+
+def test_variable_stuffer_truncate_right_with_fixed_counterpart():
+    spec = AssemblySpec(
+        slots=[
+            Slot(name="ins", behavior=SlotBehavior.FIXED, sequences=[NamedSequence("i", "GGG")]),
+            _stuffer_slot("stuffer", "ins", "AAAATTTT", "right"),  # 8 - 3 -> keep left 5
+        ]
+    )
+    constructs = assemble(spec)
+    assert len(constructs) == 1
+    assert constructs[0].assignments["stuffer"].sequence == "AAAAT"
+    assert constructs[0].full_sequence == "GGGAAAAT"
+
+
+def test_variable_stuffer_truncate_left_with_fixed_counterpart():
+    spec = AssemblySpec(
+        slots=[
+            Slot(name="ins", behavior=SlotBehavior.FIXED, sequences=[NamedSequence("i", "GGG")]),
+            _stuffer_slot("stuffer", "ins", "AAAATTTT", "left"),  # 8 - 3 -> keep right 5
+        ]
+    )
+    constructs = assemble(spec)
+    assert constructs[0].assignments["stuffer"].sequence == "ATTTT"
+
+
+def test_variable_stuffer_resizes_per_construct_with_zip():
+    spec = AssemblySpec(
+        slots=[
+            Slot(
+                name="ins",
+                behavior=SlotBehavior.ZIP,
+                sequences=[NamedSequence("short", "GG"), NamedSequence("long", "GGGGGG")],
+            ),
+            _stuffer_slot("stuffer", "ins", "AAAAAAAAAA", "right"),  # len 10
+        ]
+    )
+    constructs = assemble(spec)
+    assert len(constructs) == 2
+    assert len(constructs[0].assignments["stuffer"].sequence) == 8  # 10 - 2
+    assert len(constructs[1].assignments["stuffer"].sequence) == 4  # 10 - 6
+    for c in constructs:
+        pair = len(c.assignments["ins"].sequence) + len(c.assignments["stuffer"].sequence)
+        assert pair == 10  # invariant: ins + stuffer == untruncated stuffer length
+
+
+def test_variable_stuffer_nonadjacent_counterpart():
+    # Counterpart 'ins' with an intervening fixed 'spacer' between it and the stuffer.
+    spec = AssemblySpec(
+        slots=[
+            Slot(name="ins", behavior=SlotBehavior.FIXED, sequences=[NamedSequence("i", "GGGG")]),
+            Slot(name="spacer", behavior=SlotBehavior.FIXED, sequences=[NamedSequence("s", "TT")]),
+            _stuffer_slot("stuffer", "ins", "AAAAAAAAAA", "right"),  # 10 - 4 -> keep 6
+        ]
+    )
+    constructs = assemble(spec)
+    assert constructs[0].assignments["stuffer"].sequence == "AAAAAA"
+    assert constructs[0].full_sequence == "GGGGTTAAAAAA"
+
+
+def test_variable_stuffer_exact_fill_is_empty():
+    spec = AssemblySpec(
+        slots=[
+            Slot(name="ins", behavior=SlotBehavior.FIXED, sequences=[NamedSequence("i", "GGG")]),
+            _stuffer_slot("stuffer", "ins", "AAA", "left"),  # 3 - 3 -> empty (not whole seq)
+        ]
+    )
+    constructs = assemble(spec)
+    assert constructs[0].assignments["stuffer"].sequence == ""
+    assert constructs[0].full_sequence == "GGG"
+
+
+def test_variable_stuffer_overflow_raises():
+    spec = AssemblySpec(
+        slots=[
+            Slot(name="ins", behavior=SlotBehavior.FIXED, sequences=[NamedSequence("i", "GGGGGGGG")]),
+            _stuffer_slot("stuffer", "ins", "AAA", "right"),  # counterpart 8 > stuffer 3
+        ]
+    )
+    with pytest.raises(ValueError, match="exceeds stuffer length"):
+        assemble(spec)

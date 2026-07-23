@@ -12,6 +12,9 @@ def assemble(spec: AssemblySpec) -> list[Construct]:
     fixed_slots = [s for s in spec.slots if s.behavior is SlotBehavior.FIXED]
     product_slots = [s for s in spec.slots if s.behavior is SlotBehavior.PRODUCT]
     zip_slots = [s for s in spec.slots if s.behavior is SlotBehavior.ZIP]
+    stuffer_slots = [
+        s for s in spec.slots if s.behavior is SlotBehavior.VARIABLE_STUFFER
+    ]
 
     # Build fixed assignments (same for every construct)
     fixed_assignments = {s.name: s.sequences[0] for s in fixed_slots}
@@ -61,8 +64,38 @@ def assemble(spec: AssemblySpec) -> list[Construct]:
         for slot in zip_slots:
             assignments[slot.name] = slot.sequences[i]
 
+        # Resolve variable stuffers last: each depends on its counterpart's
+        # length in THIS construct (counterparts are never stuffers, so they
+        # are already assigned above).
+        for slot in stuffer_slots:
+            counterpart_len = len(assignments[slot.counterpart].sequence)
+            assignments[slot.name] = _truncate_stuffer(slot, counterpart_len)
+
         constructs.append(
             Construct(assignments=assignments, slot_order=spec.slot_order)
         )
 
     return constructs
+
+
+def _truncate_stuffer(slot: Slot, counterpart_len: int) -> NamedSequence:
+    """Truncate a variable-stuffer slot so that it plus its counterpart equal
+    the untruncated stuffer's length.
+
+    ``truncate_side`` selects which end is trimmed, independently of where the
+    counterpart sits.
+    """
+    full = slot.sequences[0]
+    keep = len(full.sequence) - counterpart_len
+    if keep < 0:
+        raise ValueError(
+            f"Variable stuffer slot '{slot.name}': counterpart length "
+            f"({counterpart_len}) exceeds stuffer length "
+            f"({len(full.sequence)}); cannot hold the combined length constant"
+        )
+    if slot.truncate_side == "right":
+        truncated = full.sequence[:keep]  # trim the right end, keep the left
+    else:  # "left"
+        # trim the left end, keep the right; index by length so keep == 0 -> ""
+        truncated = full.sequence[len(full.sequence) - keep:]
+    return NamedSequence(name=full.name, sequence=truncated)

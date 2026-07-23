@@ -127,8 +127,18 @@ The GUI provides an interactive interface for building slot configurations, runn
 | `fixed`   | Same single sequence in every construct | 1 (constant) |
 | `zip`     | Sequences paired by index across all zip slots | N (zip length) |
 | `product` | Full Cartesian product across all product slots | N1 x N2 x ... |
+| `variable_stuffer` | Single sequence truncated so it plus a named counterpart slot always equal the untruncated stuffer length | 1 (constant) |
 
 When both `product` and `zip` slots are present, the zip count must equal the product count — each product combination is paired 1:1 with a zip entry. Set `allow_zip_trim: true` to silently truncate zip slots that have more entries than needed (zip slots with too few entries still produce an error).
+
+### Variable stuffer
+
+A `variable_stuffer` slot holds a single sequence and truncates it per construct so that the stuffer plus its `counterpart` slot always sum to the untruncated stuffer's length — only the stuffer is trimmed. This keeps a construct region at a fixed total length as the counterpart (e.g. an ORF) varies.
+
+- `counterpart` names the slot whose length is subtracted. It may be any non-stuffer slot, in any position — other slots are allowed to sit between the stuffer and its counterpart (they add length on top of the fixed stuffer+counterpart total).
+- `truncate_side` (`left` or `right`) selects which end of the stuffer is trimmed, independently of where the counterpart sits.
+
+If the counterpart is ever longer than the untruncated stuffer, assembly raises an error (the combined length can't be held constant).
 
 ## YAML config reference
 
@@ -147,7 +157,10 @@ output:
 # Required: ordered list of slots
 slots:
   - name: slot_name          # unique slot identifier
-    behavior: fixed|zip|product
+    behavior: fixed|zip|product|variable_stuffer
+    # For variable_stuffer slots only:
+    counterpart: other_slot   # name of the slot whose length is subtracted
+    truncate_side: left|right # which end of the stuffer to trim
     source:
       # One of:
       inline:
@@ -183,3 +196,4 @@ The production image includes `procps` for Nextflow compatibility and uses `ENTR
 - `examples/paired_iteration.yaml` — 5 slots with fixed flanks and zipped ORF/barcode pairs (3 constructs)
 - `examples/full_combinatorial.yaml` — 2 product slots for full Cartesian product (6 constructs)
 - `examples/combinatorial_barcodes.yaml` — product + zip: 6 promoter/ORF combos each paired with a unique barcode
+- `examples/variable_stuffer.yaml` — a variable stuffer that shrinks as a zipped ORF grows, holding ORF + stuffer at a constant length

@@ -30,6 +30,8 @@ def load_config(config_path: str | Path) -> tuple[AssemblySpec, dict]:
                 name=slot_def["name"],
                 behavior=behavior,
                 sequences=sequences,
+                counterpart=slot_def.get("counterpart"),
+                truncate_side=slot_def.get("truncate_side"),
             )
         )
 

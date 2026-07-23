@@ -1,0 +1,47 @@
+# Variable stuffer: a single padding sequence truncated per construct so that
+# the stuffer plus its counterpart slot always total the untruncated stuffer's
+# length. Only the stuffer is trimmed.
+#
+# Here the ORF varies in length (zip, 6/12/18 bp) and the 30 bp stuffer shrinks
+# to keep orf + stuffer constant at 30 bp (trimmed from its right/3' end). The
+# fixed flanks add a constant 12 bp on top, so every construct is 42 bp.
+
+name_template: "{orf}"
+output:
+  fasta: output/variable_stuffer.fasta
+  csv: output/variable_stuffer.csv
+
+slots:
+  - name: flank_5p
+    behavior: fixed
+    source:
+      inline:
+        - name: flank_5p
+          sequence: GCTAGC
+
+  - name: orf
+    behavior: zip
+    source:
+      inline:
+        - name: shortORF
+          sequence: ATGGGC
+        - name: midORF
+          sequence: ATGGGCAAGCTT
+        - name: longORF
+          sequence: ATGGGCAAGCTTGATATC
+
+  - name: stuffer
+    behavior: variable_stuffer
+    counterpart: orf          # subtract the ORF's length from the stuffer
+    truncate_side: right      # trim the stuffer's 3' end
+    source:
+      inline:
+        - name: pad
+          sequence: AAAAAAAAAACCCCCCCCCCGGGGGGGGGG   # 30 bp
+
+  - name: flank_3p
+    behavior: fixed
+    source:
+      inline:
+        - name: flank_3p
+          sequence: GCTAGC

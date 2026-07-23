@@ -23,7 +23,7 @@ st.set_page_config(page_title="dna-concat — DNA Assembly", layout="wide")
 # Session state defaults
 # ---------------------------------------------------------------------------
 
-_BEHAVIOR_OPTIONS = ["fixed", "zip", "product"]
+_BEHAVIOR_OPTIONS = ["fixed", "zip", "product", "variable_stuffer"]
 
 
 def _init_state():
@@ -49,6 +49,8 @@ def _add_slot(
     source_type: str = "Inline",
     inline_text: str = "",
     sequences: list[dict] | None = None,
+    counterpart: str | None = None,
+    truncate_side: str | None = None,
 ) -> None:
     """Append a new slot to session state with a stable ID."""
     slot_id = st.session_state["next_slot_id"]
@@ -61,6 +63,8 @@ def _add_slot(
             "source_type": source_type,
             "inline_text": inline_text,
             "sequences": sequences or [],
+            "counterpart": counterpart,
+            "truncate_side": truncate_side,
         }
     )
 
@@ -152,6 +156,8 @@ if config_file is not None:
             for slot_def in raw.get("slots", []):
                 name = slot_def.get("name", "")
                 behavior = slot_def.get("behavior", "product")
+                counterpart = slot_def.get("counterpart")
+                truncate_side = slot_def.get("truncate_side")
                 source = slot_def.get("source", {})
 
                 if "inline" in source:
@@ -164,12 +170,26 @@ if config_file is not None:
                         behavior=behavior,
                         source_type="Inline",
                         inline_text=inline_text,
+                        counterpart=counterpart,
+                        truncate_side=truncate_side,
                     )
                 elif "fasta" in source or "csv" in source:
                     file_ref_warnings.append(name)
-                    _add_slot(name=name, behavior=behavior, source_type="Inline")
+                    _add_slot(
+                        name=name,
+                        behavior=behavior,
+                        source_type="Inline",
+                        counterpart=counterpart,
+                        truncate_side=truncate_side,
+                    )
                 else:
-                    _add_slot(name=name, behavior=behavior, source_type="Inline")
+                    _add_slot(
+                        name=name,
+                        behavior=behavior,
+                        source_type="Inline",
+                        counterpart=counterpart,
+                        truncate_side=truncate_side,
+                    )
 
             if file_ref_warnings:
                 st.sidebar.warning(
@@ -271,6 +291,49 @@ for idx, slot_data in enumerate(st.session_state["slots"]):
 
         if slot_data["behavior"] == "fixed":
             st.info("Fixed slots require exactly 1 sequence.")
+        elif slot_data["behavior"] == "variable_stuffer":
+            st.info(
+                "Variable stuffer slots use exactly 1 sequence and truncate it "
+                "per construct so the stuffer plus its counterpart slot always "
+                "equal the untruncated stuffer length."
+            )
+            other_names = [
+                s["name"]
+                for s in st.session_state["slots"]
+                if s["id"] != sid and s["name"]
+            ]
+            sc1, sc2 = st.columns(2)
+            with sc1:
+                if other_names:
+                    cp_idx = (
+                        other_names.index(slot_data["counterpart"])
+                        if slot_data.get("counterpart") in other_names
+                        else 0
+                    )
+                    slot_data["counterpart"] = st.selectbox(
+                        "Counterpart slot",
+                        other_names,
+                        index=cp_idx,
+                        key=f"{prefix}_counterpart",
+                        help="The slot whose length is subtracted from the stuffer.",
+                    )
+                else:
+                    st.warning("Add another named slot to use as the counterpart.")
+                    slot_data["counterpart"] = None
+            with sc2:
+                ts_options = ["left", "right"]
+                ts_idx = (
+                    ts_options.index(slot_data["truncate_side"])
+                    if slot_data.get("truncate_side") in ts_options
+                    else 1  # default: trim the right end
+                )
+                slot_data["truncate_side"] = st.selectbox(
+                    "Truncate side",
+                    ts_options,
+                    index=ts_idx,
+                    key=f"{prefix}_truncate_side",
+                    help="Which end of the stuffer sequence to trim.",
+                )
 
         # Source type
         source_options = ["Inline", "Upload FASTA", "Upload CSV"]
@@ -410,7 +473,13 @@ if st.button("Run Assembly", type="primary", key="run_assembly"):
                 st.stop()
 
             behavior = SlotBehavior(slot_data["behavior"])
-            built_slots.append(Slot(name=slot_data["name"], behavior=behavior, sequences=seqs))
+            extra = {}
+            if behavior is SlotBehavior.VARIABLE_STUFFER:
+                extra["counterpart"] = slot_data.get("counterpart") or None
+                extra["truncate_side"] = slot_data.get("truncate_side") or None
+            built_slots.append(
+                Slot(name=slot_data["name"], behavior=behavior, sequences=seqs, **extra)
+            )
         except ValueError as e:
             st.error(f"Slot '{slot_data['name']}': {e}")
             st.stop()
