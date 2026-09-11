@@ -4,7 +4,7 @@ Issues identified during code review, retained here for context on design decisi
 
 ## Zip length validation
 
-`_validate_zip_groups()` enforces equal lengths within zip slots, but `assemble()` assumes a single global length and forces it to match product-count when both behaviors coexist. When mixing product and zip slots, assembly fails unless counts match — this is intentional (it's a validation constraint, not a bug).
+`AssemblySpec._validate_zip_slots()` enforces equal lengths across zip slots unless `allow_zip_trim` is enabled. `assemble()` pairs zip entries with product combinations 1:1 when both behaviors coexist. Without trimming, their counts must match. With trimming, each zip slot must have at least the product count; extra entries are ignored. If there are no product slots, trimming uses the shortest zip slot's length. These are intentional validation constraints.
 
 ## Memory considerations
 

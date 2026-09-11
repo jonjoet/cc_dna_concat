@@ -5,6 +5,10 @@
 # Here the ORF varies in length (zip, 6/12/18 bp) and the 30 bp stuffer shrinks
 # to keep orf + stuffer constant at 30 bp (trimmed from its right/3' end). The
 # fixed flanks add a constant 12 bp on top, so every construct is 42 bp.
+# Retained stuffer lengths are 24, 18, and 12 bp, respectively.
+# Use truncate_side: left to retain the suffix instead of the prefix.
+# Both counterpart and truncate_side are required for variable_stuffer.
+# Output paths below resolve relative to this YAML file's directory.
 
 name_template: "{orf}"
 output:
